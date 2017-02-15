@@ -1,4 +1,4 @@
-package pt
+package mc
 
 import "math"
 
@@ -76,7 +76,7 @@ func mcPolygonize(p [8]Vector, v [8]float64, x float64) []Triangle {
 		v1 := points[table[i*3+0]]
 		v2 := points[table[i*3+1]]
 		v3 := points[table[i*3+2]]
-		result[i] = Triangle{v3, v2, v1}
+		result[i] = Triangle{v1, v2, v3}
 	}
 	return result
 }
