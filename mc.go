@@ -24,9 +24,9 @@ func MarchingCubes(e Evaluator, x0, y0, z0, x1, y1, z1, dx, dy, dz, value float6
 	sy := (y1 - y0) / float64(ny)
 	sz := (z1 - z0) / float64(nz)
 	var triangles []Triangle
-	for z := 0; z < nz-1; z++ {
-		for x := 0; x < nx-1; x++ {
-			for y := 0; y < ny-1; y++ {
+	for z := 0; z < nz; z++ {
+		for x := 0; x < nx; x++ {
+			for y := 0; y < ny; y++ {
 				px0, py0, pz0 := float64(x)*sx+x0, float64(y)*sy+y0, float64(z)*sz+z0
 				px1, py1, pz1 := px0+sx, py0+sy, pz0+sz
 				p := [8]Vector{
@@ -48,6 +48,55 @@ func MarchingCubes(e Evaluator, x0, y0, z0, x1, y1, z1, dx, dy, dz, value float6
 		}
 	}
 	return triangles
+}
+
+func MarchingCubesMulti(e Evaluator, x0, y0, z0, x1, y1, z1, dx, dy, dz float64) map[float64][]Triangle {
+	nx := int(math.Ceil((x1 - x0) / dx))
+	ny := int(math.Ceil((y1 - y0) / dy))
+	nz := int(math.Ceil((z1 - z0) / dz))
+	sx := (x1 - x0) / float64(nx)
+	sy := (y1 - y0) / float64(ny)
+	sz := (z1 - z0) / float64(nz)
+	result := make(map[float64][]Triangle)
+	for z := 0; z < nz; z++ {
+		for x := 0; x < nx; x++ {
+			for y := 0; y < ny; y++ {
+				px0, py0, pz0 := float64(x)*sx+x0, float64(y)*sy+y0, float64(z)*sz+z0
+				px1, py1, pz1 := px0+sx, py0+sy, pz0+sz
+				p := [8]Vector{
+					Vector{px0, py0, pz0},
+					Vector{px1, py0, pz0},
+					Vector{px1, py1, pz0},
+					Vector{px0, py1, pz0},
+					Vector{px0, py0, pz1},
+					Vector{px1, py0, pz1},
+					Vector{px1, py1, pz1},
+					Vector{px0, py1, pz1},
+				}
+				distinct := make(map[float64]bool)
+				var values [8]float64
+				for i := 0; i < 8; i++ {
+					value := e.Evaluate(p[i].X, p[i].Y, p[i].Z)
+					if value == 0 {
+						continue
+					}
+					values[i] = value
+					distinct[value] = true
+				}
+				for value := range distinct {
+					var v [8]float64
+					for i := range values {
+						if values[i] == value {
+							v[i] = 1
+						}
+					}
+					triangles := mcPolygonize(p, v, 0.5)
+					result[value] = append(result[value], triangles...)
+				}
+			}
+		}
+	}
+	return result
 }
 
 func mcPolygonize(p [8]Vector, v [8]float64, x float64) []Triangle {
