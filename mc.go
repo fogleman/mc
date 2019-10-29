@@ -16,6 +16,43 @@ type Evaluator interface {
 	Evaluate(x, y, z float64) float64
 }
 
+func MarchingCubesGrid(w, h, d int, data []float64, value float64) []Triangle {
+	var triangles []Triangle
+	for z0 := 0; z0 < d-1; z0++ {
+		z1 := z0 + 1
+		for y0 := 0; y0 < h-1; y0++ {
+			y1 := y0 + 1
+			for x0 := 0; x0 < w-1; x0++ {
+				x1 := x0 + 1
+				v := [8]float64{
+					data[x0+y0*w+z0*w*h],
+					data[x1+y0*w+z0*w*h],
+					data[x1+y1*w+z0*w*h],
+					data[x0+y1*w+z0*w*h],
+					data[x0+y0*w+z1*w*h],
+					data[x1+y0*w+z1*w*h],
+					data[x1+y1*w+z1*w*h],
+					data[x0+y1*w+z1*w*h],
+				}
+				px0, py0, pz0 := float64(x0), float64(y0), float64(z0)
+				px1, py1, pz1 := float64(x1), float64(y1), float64(z1)
+				p := [8]Vector{
+					Vector{px0, py0, pz0},
+					Vector{px1, py0, pz0},
+					Vector{px1, py1, pz0},
+					Vector{px0, py1, pz0},
+					Vector{px0, py0, pz1},
+					Vector{px1, py0, pz1},
+					Vector{px1, py1, pz1},
+					Vector{px0, py1, pz1},
+				}
+				triangles = append(triangles, mcPolygonize(p, v, value)...)
+			}
+		}
+	}
+	return triangles
+}
+
 func MarchingCubes(e Evaluator, x0, y0, z0, x1, y1, z1, dx, dy, dz, value float64) []Triangle {
 	nx := int(math.Ceil((x1 - x0) / dx))
 	ny := int(math.Ceil((y1 - y0) / dy))
